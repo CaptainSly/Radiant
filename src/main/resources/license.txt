@@ -1,0 +1,11 @@
+Model Information:
+* title:	Monke
+* source:	https://sketchfab.com/3d-models/monke-0f81ff8ac9f44436b1750f06d1333967
+* author:	Nwilly_art (https://sketchfab.com/Nwilly_art)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Monke" (https://sketchfab.com/3d-models/monke-0f81ff8ac9f44436b1750f06d1333967) by Nwilly_art (https://sketchfab.com/Nwilly_art) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -1,8 +1,16 @@
 #version 330
 
-in vec4 color;
+in vec2 outTextCoords;
+out vec4 fragColor;
+
+struct Material {
+	vec4 diffuse;
+};
+
+uniform sampler2D txtSampler;
+uniform Material material;
 
 void main()
 {
-    gl_FragColor = color;
+	fragColor = texture(txtSampler, outTextCoords) + material.diffuse;
 }

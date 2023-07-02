@@ -1,7 +1,7 @@
 package com.captainsly.radiant;
 
 import com.captainsly.radiant.core.Engine;
-import com.captainsly.radiant.test.Game;
+import com.captainsly.radiant.core.Game;
 
 public class Main {
 

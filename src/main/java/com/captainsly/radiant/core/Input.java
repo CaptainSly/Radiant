@@ -12,16 +12,41 @@ public class Input {
 
 	private static List<Integer> currentKeys;
 	private static List<Integer> currentMouseBtns;
-	private static Vector2f currentMousePosition, lastMousePosition, mouseDeltaPosition, mouseScrollOffset;
+	private static Vector2f currentMousePos, displayVec, previousMousePos, mouseScrollOffset;
+	private static boolean isInWindow = true;
 
 	public Input() {
 		currentKeys = new ArrayList<>();
 		currentMouseBtns = new ArrayList<>();
 
-		currentMousePosition = new Vector2f();
-		lastMousePosition = new Vector2f();
-		mouseDeltaPosition = new Vector2f();
+		currentMousePos = new Vector2f();
+		previousMousePos = new Vector2f(-1, -1);
+		displayVec = new Vector2f();
 		mouseScrollOffset = new Vector2f();
+	}
+
+	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	// Governing Methods
+	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+	public void update() {
+		displayVec.x = 0;
+		displayVec.y = 0;
+
+		if (previousMousePos.x > 0 && previousMousePos.y > 0 && isInWindow) {
+			double deltaX = currentMousePos.x - previousMousePos.x;
+			double deltaY = currentMousePos.y - previousMousePos.y;
+			boolean rotateX = deltaX != 0;
+			boolean rotateY = deltaY != 0;
+
+			if (rotateX)
+				displayVec.y = (float) deltaX;
+			if (rotateY)
+				displayVec.x = (float) deltaY;
+		}
+		
+		previousMousePos.x = currentMousePos.x;
+		previousMousePos.y = currentMousePos.y;
 	}
 
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -41,9 +66,8 @@ public class Input {
 
 	// Mouse Cursor Position Callback
 	public static void cursor_position_callback(long windowPointer, double xPos, double yPos) {
-		lastMousePosition.set(currentMousePosition);
-		currentMousePosition.set(xPos, yPos);
-		mouseDeltaPosition.set(currentMousePosition.sub(lastMousePosition));
+		previousMousePos.set(currentMousePos);
+		currentMousePos.set(xPos, yPos);
 	}
 
 	// Mouse Button Callback
@@ -53,6 +77,11 @@ public class Input {
 				currentMouseBtns.add(button);
 		} else if (action == GLFW_RELEASE)
 			currentMouseBtns.remove((Integer) button);
+	}
+
+	// Cursor Enter Callback
+	public static void cursor_enter_callback(long windowPointer, boolean entered) {
+		isInWindow = entered;
 	}
 
 	// Mouse Scroll Callback
@@ -73,15 +102,15 @@ public class Input {
 	}
 
 	public Vector2f getCurrentMousePosition() {
-		return currentMousePosition;
+		return currentMousePos;
 	}
 
-	public Vector2f getLastMousePosition() {
-		return lastMousePosition;
+	public Vector2f getPreviousMousePosition() {
+		return previousMousePos;
 	}
 
-	public Vector2f getMouseDeltaPosition() {
-		return mouseDeltaPosition;
+	public Vector2f getMouseDisplayVec() {
+		return displayVec;
 	}
 
 }

@@ -6,7 +6,7 @@ import java.nio.IntBuffer;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryUtil;
 
-import com.captainsly.radiant.core.render.mesh.Vertex;
+import com.captainsly.radiant.core.render.gl.mesh.Vertex;
 
 public class Buffers {
 

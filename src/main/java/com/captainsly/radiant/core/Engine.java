@@ -2,7 +2,6 @@ package com.captainsly.radiant.core;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB;
 
 import java.util.Random;
 
@@ -41,7 +40,6 @@ public class Engine implements Disposable {
 		Radiant.rnJesus = new Random(System.currentTimeMillis());
 		Radiant.window = new Window("Project Radiant", 1280, 720);
 		Radiant.input = new Input();
-		Radiant.resources = new ResourceLoader();
 
 		// GLFW Callbacks
 		glfwSetKeyCallback(Radiant.window.getWindowPointer(), Input::key_callback);
@@ -56,6 +54,8 @@ public class Engine implements Disposable {
 
 		GL.createCapabilities();
 
+		Radiant.resources = new ResourceLoader();
+
 		gameLogic.onInit();
 	}
 
@@ -68,16 +68,11 @@ public class Engine implements Disposable {
 
 		long lastTime = Time.getTime();
 		double unprocessedTime = 0;
-		
-		glFrontFace(GL_CW);
-		glCullFace(GL_BACK);
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
-		
-		//TODO: Depth clamp for later
-		
-		glEnable(GL_FRAMEBUFFER_SRGB);
 
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		
 		while (isRunning) {
 
 			boolean render = false;
@@ -100,7 +95,10 @@ public class Engine implements Disposable {
 					Radiant.window.setWindowShouldClose(true);
 
 				Time.setDelta(frameTime);
+
+				Radiant.input.update();
 				gameLogic.onInput(Time.getDelta());
+
 				gameLogic.onUpdate(Time.getDelta());
 				updates++;
 
@@ -140,6 +138,9 @@ public class Engine implements Disposable {
 
 		private static double delta;
 
+		private Time() {
+		}
+
 		public static long getTime() {
 			return System.nanoTime();
 		}
@@ -157,6 +158,7 @@ public class Engine implements Disposable {
 	@Override
 	public void onDispose() {
 		gameLogic.onDispose();
+		Radiant.resources.onDispose();
 		Radiant.window.onDispose();
 		glfwTerminate();
 		glfwSetErrorCallback(null).free();
