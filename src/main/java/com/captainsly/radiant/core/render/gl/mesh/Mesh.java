@@ -1,9 +1,6 @@
 package com.captainsly.radiant.core.render.gl.mesh;
 
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
-import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
-import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
-import static org.lwjgl.opengl.GL11.glDrawElements;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
@@ -29,7 +26,7 @@ public class Mesh implements Disposable {
 
 	private List<Integer> vboIdList;
 
-	public Mesh(Vertex[] vertices, float[] textCoords, int[] indices) {
+	public Mesh(Vertex[] vertices, float[] normals, float[] textCoords, int[] indices) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			this.numVertices = indices.length;
 			vboIdList = new ArrayList<>();
@@ -46,6 +43,16 @@ public class Mesh implements Disposable {
 			glEnableVertexAttribArray(0);
 			glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 
+			// Normals VBO
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			FloatBuffer normalsBuffer = Buffers.createFloatBuffer(normals.length);
+			normalsBuffer.put(0, normals);
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+
 			// Texture Coords VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
@@ -53,8 +60,8 @@ public class Mesh implements Disposable {
 			textCoordsBuffer.put(0, textCoords);
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, textCoordsBuffer, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+			glEnableVertexAttribArray(2);
+			glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
 
 			// Index VBO
 			vboId = glGenBuffers();
@@ -70,6 +77,10 @@ public class Mesh implements Disposable {
 	}
 
 	public void draw() {
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
 		glBindVertexArray(vaoId);
 		glDrawElements(GL_TRIANGLES, numVertices, GL_UNSIGNED_INT, 0);
 	}

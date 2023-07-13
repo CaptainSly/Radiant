@@ -6,15 +6,23 @@ import static org.lwjgl.opengl.GL11.glViewport;
 
 import java.nio.IntBuffer;
 
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import com.captainsly.radiant.core.impl.Disposable;
 
+import imgui.ImGui;
+import imgui.flag.ImGuiConfigFlags;
+import imgui.gl3.ImGuiImplGl3;
+import imgui.glfw.ImGuiImplGlfw;
+
 public class Window implements Disposable {
 
 	private final long windowPointer;
+	private final ImGuiImplGlfw imGuiGLFW = new ImGuiImplGlfw();
+	private final ImGuiImplGl3 imGuiGL = new ImGuiImplGl3();
 
 	private String windowTitle;
 	private int windowWidth, windowHeight;
@@ -48,10 +56,35 @@ public class Window implements Disposable {
 		}
 	}
 
+	public void init() {
+		ImGui.createContext();
+		imGuiGLFW.init(windowPointer, true);
+		imGuiGL.init("#version 330");
+	}
+	
+	public void newFrame() {
+		imGuiGLFW.newFrame();
+		ImGui.newFrame();
+	}
+	
+	public void endFrame() {
+		ImGui.render();
+		imGuiGL.renderDrawData(ImGui.getDrawData());
+		
+		if (ImGui.getIO().hasConfigFlags(ImGuiConfigFlags.ViewportsEnable)) {
+			final long backupWindowPtr = GLFW.glfwGetCurrentContext();
+			ImGui.updatePlatformWindows();
+			ImGui.renderPlatformWindowsDefault();
+			GLFW.glfwMakeContextCurrent(backupWindowPtr);
+		}
+		
+	}
+
 	private void resize(long windowPointer, int width, int height) {
 		windowWidth = width;
 		windowHeight = height;
 		glViewport(0, 0, windowWidth, windowHeight);
+		
 	}
 
 	public void setWindowTitle(String windowTitle) {
@@ -69,6 +102,14 @@ public class Window implements Disposable {
 
 	public boolean shouldWindowClose() {
 		return glfwWindowShouldClose(windowPointer);
+	}
+
+	public ImGuiImplGlfw getImGuiGLFW() {
+		return imGuiGLFW;
+	}
+
+	public ImGuiImplGl3 getImGuiGL() {
+		return imGuiGL;
 	}
 
 	public long getWindowPointer() {
@@ -89,6 +130,10 @@ public class Window implements Disposable {
 
 	@Override
 	public void onDispose() {
+		imGuiGL.dispose();
+		imGuiGLFW.dispose();
+		ImGui.destroyContext();
+
 		glfwFreeCallbacks(windowPointer);
 		glfwDestroyWindow(windowPointer);
 	}

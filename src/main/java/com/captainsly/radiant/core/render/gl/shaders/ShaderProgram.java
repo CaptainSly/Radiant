@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -17,11 +18,9 @@ public class ShaderProgram implements Disposable {
 	private int programId;
 	private int vertexShader, fragmentShader;
 
-	private Map<String, Integer> uniformMap;
+	private Map<String, Integer> uniformMap = new HashMap<>();
 
 	public ShaderProgram(String vSource, String fSource) {
-		uniformMap = new HashMap<>();
-
 		programId = glCreateProgram();
 		if (programId == 0)
 			throw new RuntimeException("Could not create Shader");
@@ -46,6 +45,10 @@ public class ShaderProgram implements Disposable {
 
 	public void setUniform(String uniformName, float value) {
 		glUniform1f(uniformMap.get(uniformName), value);
+	}
+
+	public void setUniform(String uniformName, Vector2f value) {
+		glUniform2f(uniformMap.get(uniformName), value.x, value.y);
 	}
 
 	public void setUniform(String uniformName, Vector3f value) {
@@ -106,6 +109,22 @@ public class ShaderProgram implements Disposable {
 
 	public void unbind() {
 		glUseProgram(0);
+	}
+
+	public int getProgramId() {
+		return programId;
+	}
+
+	public int getVertexShader() {
+		return vertexShader;
+	}
+
+	public int getFragmentShader() {
+		return fragmentShader;
+	}
+
+	public Map<String, Integer> getUniformMap() {
+		return uniformMap;
 	}
 
 	@Override

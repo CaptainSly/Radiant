@@ -43,6 +43,8 @@ public class ResourceLoader implements Disposable {
 	 * @return the ShaderProgram for this Shader
 	 */
 	public ShaderProgram getShader(String shaderName) {
+		shaderName = "src/main/resources/shaders/" + shaderName;
+
 		ShaderProgram shader = new ShaderProgram(Radiant.files.getFileContents(shaderName + ".vs"),
 				Radiant.files.getFileContents(shaderName + ".fs"));
 		return shader;
@@ -70,7 +72,8 @@ public class ResourceLoader implements Disposable {
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	// Models
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	public Model loadModel(String modelId, String modelPath) {
+
+	public Model getModel(String modelId, String modelPath) {
 		return loadModel(modelId, modelPath,
 				aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
 						| aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights
@@ -78,7 +81,7 @@ public class ResourceLoader implements Disposable {
 
 	}
 
-	public Model loadModel(String modelId, String modelPath, int flags) {
+	private Model loadModel(String modelId, String modelPath, int flags) {
 		File file = new File(modelPath);
 		if (!file.exists())
 			throw new RuntimeException("Model path does not exist [" + modelPath + "]");
@@ -125,10 +128,27 @@ public class ResourceLoader implements Disposable {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			AIColor4D color = AIColor4D.create();
 
-			int result = aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, aiTextureType_NONE, 0, color);
-			if (result == aiReturn_SUCCESS) {
+			int result = aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_AMBIENT, aiTextureType_NONE, 0, color);
+			if (result == aiReturn_SUCCESS)
+				material.setAmbientColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
+
+			result = aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, aiTextureType_NONE, 0, color);
+			if (result == aiReturn_SUCCESS)
 				material.setDiffuseColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
-			}
+
+			result = aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_SPECULAR, aiTextureType_NONE, 0, color);
+			if (result == aiReturn_SUCCESS)
+				material.setSpecularColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
+
+			float reflectance = 0.0f;
+			float[] shininessFactor = new float[] { 0.0f };
+			int[] pMax = new int[] { 1 };
+			result = aiGetMaterialFloatArray(aiMaterial, AI_MATKEY_SHININESS_STRENGTH, aiTextureType_NONE, 0,
+					shininessFactor, pMax);
+			if (result != aiReturn_SUCCESS)
+				reflectance = shininessFactor[0];
+
+			material.setReflectance(reflectance);
 
 			AIString aiTexturePath = AIString.calloc(stack);
 			aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null, null, null,
@@ -140,6 +160,16 @@ public class ResourceLoader implements Disposable {
 				material.setDiffuseColor(Material.DEFAULT_COLOR);
 			}
 
+			// Normals aiTextureType_NORMALS
+
+			// Roughness aiTextureType_ROUGHNESS
+
+			// Emissive aiTextureType_EMISSIVE
+
+			// Metallic aiTextureType_METALNESS
+
+			// Ambient Occulsion aiTextureType_AMBIENT_OCCULSION
+
 			return material;
 		}
 	}
@@ -147,6 +177,7 @@ public class ResourceLoader implements Disposable {
 	private Mesh processMesh(AIMesh aiMesh) {
 		Vertex[] vertices = processVertices(aiMesh);
 		float[] textCoords = processTextCoords(aiMesh);
+		float[] normals = processNormals(aiMesh);
 		int[] indices = processIndices(aiMesh);
 
 		// Texture coordinates may not have been populated. We need at least the empty
@@ -156,7 +187,7 @@ public class ResourceLoader implements Disposable {
 			textCoords = new float[numElements];
 		}
 
-		return new Mesh(vertices, textCoords, indices);
+		return new Mesh(vertices, normals, textCoords, indices);
 	}
 
 	private int[] processIndices(AIMesh aiMesh) {
@@ -171,6 +202,21 @@ public class ResourceLoader implements Disposable {
 			}
 		}
 		return indices.stream().mapToInt(Integer::intValue).toArray();
+	}
+
+	private float[] processNormals(AIMesh aiMesh) {
+		AIVector3D.Buffer buffer = aiMesh.mNormals();
+		
+		float[] data = new float[buffer.remaining() * 3];
+		int pos = 0;
+		while (buffer.remaining() > 0) {
+			AIVector3D normal = buffer.get();
+			data[pos++] = normal.x();
+			data[pos++] = normal.y();
+			data[pos++] = normal.z();
+		}
+
+		return data;
 	}
 
 	private float[] processTextCoords(AIMesh aiMesh) {

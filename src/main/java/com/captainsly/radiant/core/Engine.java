@@ -1,7 +1,6 @@
 package com.captainsly.radiant.core;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
 
 import java.util.Random;
 
@@ -10,6 +9,7 @@ import org.lwjgl.opengl.GL;
 
 import com.captainsly.radiant.core.impl.Disposable;
 import com.captainsly.radiant.core.impl.GameLogic;
+import com.captainsly.radiant.core.utils.RenderUtils;
 import com.captainsly.radiant.core.utils.files.ResourceLoader;
 
 public class Engine implements Disposable {
@@ -53,6 +53,7 @@ public class Engine implements Disposable {
 		glfwShowWindow(Radiant.window.getWindowPointer());
 
 		GL.createCapabilities();
+		Radiant.window.init();
 
 		Radiant.resources = new ResourceLoader();
 
@@ -69,10 +70,6 @@ public class Engine implements Disposable {
 		long lastTime = Time.getTime();
 		double unprocessedTime = 0;
 
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-		
 		while (isRunning) {
 
 			boolean render = false;
@@ -112,14 +109,19 @@ public class Engine implements Disposable {
 			}
 
 			if (render) {
-				glClearColor(0.15f, 0.15f, 0.2f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+				RenderUtils.clearBuffer();
+				
+				// Render Game
 				gameLogic.onRender();
-
-				glfwSwapBuffers(Radiant.window.getWindowPointer());
-				glfwPollEvents();
-
+				
+				// Render Ui
+				Radiant.window.newFrame();
+				gameLogic.onRenderUi();
+				Radiant.window.endFrame();
+				
+				RenderUtils.renderBuffer();
+				
 				frames++;
 			} else {
 				try {

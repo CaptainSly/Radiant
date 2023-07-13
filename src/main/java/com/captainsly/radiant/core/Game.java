@@ -1,17 +1,11 @@
 package com.captainsly.radiant.core;
 
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
-
 import java.util.Collection;
 import java.util.List;
 
 import com.captainsly.radiant.core.entity.Entity;
 import com.captainsly.radiant.core.impl.GameLogic;
 import com.captainsly.radiant.core.render.gl.Camera;
-import com.captainsly.radiant.core.render.gl.Texture;
-import com.captainsly.radiant.core.render.gl.mesh.Mesh;
-import com.captainsly.radiant.core.render.gl.model.Material;
 import com.captainsly.radiant.core.render.gl.model.Model;
 import com.captainsly.radiant.core.render.gl.shaders.ShaderProgram;
 import com.captainsly.radiant.core.scene.Scene;
@@ -28,47 +22,31 @@ public class Game implements GameLogic {
 
 		camera = new Camera();
 
-		shader = Radiant.resources.getShader("src/main/resources/default");
+		shader = Radiant.resources.getShader("default");
 		shader.addUniform("projection");
 		shader.addUniform("view");
 		shader.addUniform("model");
 		shader.addUniform("txtSampler");
-		shader.addUniform("material.diffuse");
 
 		currentScene.onInit();
 	}
 
 	@Override
 	public void onRender() {
-
 		shader.bind();
 		shader.setUniform("projection", currentScene.getProjection().getProjectionMatrix());
 		shader.setUniform("view", camera.getViewMatrix());
 		shader.setUniform("txtSampler", 0);
 
-		Collection<Model> models = currentScene.getModelMap().values();
-		for (Model model : models) {
-			List<Entity> entities = model.getEntitiesList();
-
-			for (Material material : model.getMaterialList()) {
-				shader.setUniform("material.diffuse", material.getDiffuseColor());
-
-				Texture texture = Radiant.resources.getTexture(material.getTexturePath());
-				glActiveTexture(GL_TEXTURE0);
-				texture.bind();
-
-				for (Mesh mesh : material.getMaterialMeshList()) {
-					for (Entity entity : entities) {
-						shader.setUniform("model", entity.getModelTransform().getTransformationMatrix());
-						mesh.draw();
-					}
-				}
-
-			}
-
-		}
+		currentScene.render();
 
 		shader.unbind();
+
+	}
+
+	@Override
+	public void onRenderUi() {
+		currentScene.onRenderGui();
 	}
 
 	@Override
