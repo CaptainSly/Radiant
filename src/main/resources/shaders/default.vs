@@ -8,15 +8,15 @@ out vec3 outPosition;
 out vec3 outNormal;
 out vec2 outTextCoords;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 modelMatrix;
 
 void main()
 {
-	mat4 modelViewMatrix = view * model;
+	mat4 modelViewMatrix = viewMatrix * modelMatrix;
 	vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_Position = projection * mvPosition;
+    gl_Position = projectionMatrix * mvPosition;
 	outPosition = mvPosition.xyz;
 	outNormal = normalize(modelViewMatrix * vec4(normal, 0.0)).xyz;
 	outTextCoords = texCoords;

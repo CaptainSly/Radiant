@@ -18,6 +18,7 @@ import com.captainsly.radiant.core.entity.Actor;
 import com.captainsly.radiant.core.entity.Entity;
 import com.captainsly.radiant.core.impl.Disposable;
 import com.captainsly.radiant.core.render.gl.Projection;
+import com.captainsly.radiant.core.render.gl.SkyBox;
 import com.captainsly.radiant.core.render.gl.Texture;
 import com.captainsly.radiant.core.render.gl.lights.*;
 import com.captainsly.radiant.core.render.gl.mesh.Mesh;
@@ -27,6 +28,7 @@ import com.captainsly.radiant.core.render.gl.model.Model;
 public abstract class Scene implements Disposable {
 
 	private SceneLights sceneLights;
+	private SkyBox sceneSkyBox;
 	private Map<String, Model> modelMap;
 	private Projection projection;
 	private Game game;
@@ -39,6 +41,8 @@ public abstract class Scene implements Disposable {
 		modelMap = new HashMap<>();
 		projection = new Projection(width, height);
 		sceneLights = new SceneLights();
+		sceneSkyBox = new SkyBox("src/main/resources/models/skybox/skybox.obj");
+		sceneSkyBox.getSkyBoxEntity().setScale(50);
 	}
 
 	public abstract void onInit();
@@ -191,7 +195,8 @@ public abstract class Scene implements Disposable {
 
 				for (Mesh mesh : material.getMaterialMeshList()) {
 					for (Entity entity : entities) {
-						game.getShader().setUniform("model", entity.getModelTransform().getTransformationMatrix());
+						game.getShader().setUniform("modelMatrix",
+								entity.getModelTransform().getTransformationMatrix());
 						mesh.draw();
 					}
 				}
@@ -232,6 +237,10 @@ public abstract class Scene implements Disposable {
 		return projection;
 	}
 
+	public SkyBox getSceneSkybox() {
+		return sceneSkyBox;
+	}
+
 	public SceneLights getSceneLights() {
 		return sceneLights;
 	}
@@ -242,6 +251,7 @@ public abstract class Scene implements Disposable {
 
 	@Override
 	public void onDispose() {
+		sceneSkyBox.onDispose();
 		modelMap.values().stream().forEach(Model::onDispose);
 		dispose();
 	}

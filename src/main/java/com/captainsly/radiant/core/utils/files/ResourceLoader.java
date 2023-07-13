@@ -147,7 +147,6 @@ public class ResourceLoader implements Disposable {
 					shininessFactor, pMax);
 			if (result != aiReturn_SUCCESS)
 				reflectance = shininessFactor[0];
-
 			material.setReflectance(reflectance);
 
 			AIString aiTexturePath = AIString.calloc(stack);
@@ -159,17 +158,7 @@ public class ResourceLoader implements Disposable {
 				createTexture(material.getTexturePath());
 				material.setDiffuseColor(Material.DEFAULT_COLOR);
 			}
-
-			// Normals aiTextureType_NORMALS
-
-			// Roughness aiTextureType_ROUGHNESS
-
-			// Emissive aiTextureType_EMISSIVE
-
-			// Metallic aiTextureType_METALNESS
-
-			// Ambient Occulsion aiTextureType_AMBIENT_OCCULSION
-
+			
 			return material;
 		}
 	}

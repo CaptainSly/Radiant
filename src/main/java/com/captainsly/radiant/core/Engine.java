@@ -112,6 +112,8 @@ public class Engine implements Disposable {
 
 				RenderUtils.clearBuffer();
 				
+				
+				
 				// Render Game
 				gameLogic.onRender();
 				

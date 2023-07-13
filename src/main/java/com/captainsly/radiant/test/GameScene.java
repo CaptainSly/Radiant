@@ -8,6 +8,8 @@ import org.joml.Vector3f;
 import com.captainsly.radiant.core.Game;
 import com.captainsly.radiant.core.Radiant;
 import com.captainsly.radiant.core.entity.Actor;
+import com.captainsly.radiant.core.entity.Entity;
+import com.captainsly.radiant.core.render.gl.Camera;
 import com.captainsly.radiant.core.render.gl.lights.PointLight;
 import com.captainsly.radiant.core.render.gl.lights.SpotLight;
 import com.captainsly.radiant.core.render.gl.model.Model;
@@ -16,8 +18,9 @@ import com.captainsly.radiant.core.scene.SceneLights;
 
 public class GameScene extends Scene {
 
-	private Actor cubeEntity;
+	private static final int NUM_CHUNKS = 4;
 
+	private Entity[][] terrainEntities;
 	private LightControl lc;
 
 	public GameScene(int width, int height, Game game) {
@@ -27,14 +30,22 @@ public class GameScene extends Scene {
 	@Override
 	public void onInit() {
 		createUniforms();
+
 		getGame().getCamera().setPosition(0, .3f, 0);
 
-		Model dragonModel = Radiant.resources.getModel("dragon-model",
-				"src/main/resources/models/dragon.obj");
-		addModel(dragonModel);
-		cubeEntity = new Actor("frog-entity", dragonModel);
-		cubeEntity.setPosition(0, 0, -2);
-		addEntity(cubeEntity);
+		String quadModelId = "quad-model";
+		Model quadModel = Radiant.resources.getModel(quadModelId, "src/main/resources/models/quad/quad.obj");
+
+		int numRows = NUM_CHUNKS * 2 + 1;
+		int numCols = numRows;
+		terrainEntities = new Entity[numRows][numCols];
+		for (int j = 0; j < numRows; j++) {
+			for (int i = 0; i < numCols; i++) {
+				Actor entity = new Actor("TERRAIN_" + j + "_" + i, quadModel);
+				terrainEntities[j][i] = entity;
+				addActor((Actor) terrainEntities[j][i]);
+			}
+		}
 
 		SceneLights sceneLights = new SceneLights();
 		sceneLights.getAmbientLight().setIntensity(0.3f);
@@ -92,6 +103,10 @@ public class GameScene extends Scene {
 
 	}
 
+	@Override
+	public void onRender() {
+	}
+
 	public void onRenderGui() {
 		lc.drawGui();
 	}
@@ -103,16 +118,38 @@ public class GameScene extends Scene {
 //		temp += delta;
 //		float tempSin = (float) Math.sin(temp);
 //		float tempCos = (float) Math.cos(temp);
+		updateTerrain();
+	}
+
+	public void updateTerrain() {
+		int cellSize = 10;
+		Camera camera = getGame().getCamera();
+		Vector3f cameraPos = camera.getPosition();
+		int cellCol = (int) (cameraPos.x / cellSize);
+		int cellRow = (int) (cameraPos.y / cellSize);
+
+		int numRows = NUM_CHUNKS * 2 + 1;
+		int numCols = numRows;
+		int zOffset = -NUM_CHUNKS;
+		float scale = cellSize / 2.0f;
+
+		for (int j = 0; j < numRows; j++) {
+			int xOffset = -NUM_CHUNKS;
+			for (int i = 0; i < numCols; i++) {
+				Entity entity = terrainEntities[j][i];
+				entity.setScale(scale);
+				entity.setPosition((cellCol + xOffset) * 2.0f, 0, (cellRow + zOffset) * 2.0f);
+				xOffset++;
+			}
+
+			zOffset++;
+		}
 	}
 
 	@Override
 	public void dispose() {
 		getModelMap().values().stream().forEach(Model::onDispose);
 
-	}
-
-	@Override
-	public void onRender() {
 	}
 
 }

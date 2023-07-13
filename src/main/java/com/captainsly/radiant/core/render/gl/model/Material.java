@@ -67,9 +67,17 @@ public class Material implements Disposable {
 	public void setSpecularColor(Vector4f specularColor) {
 		this.specularColor = specularColor;
 	}
+	
+	public void setAmbientColor(float r, float g, float b) {
+		ambientColor.set(r, g, b, 1.0);
+	}
+	
+	public void setSpecularColor(float r, float g, float b) {
+		specularColor.set(r, g, b, 1.0);
+	}
 
-	public void setDiffuseColor(float x, float y, float z, float w) {
-		diffuseColor.set(x, y, z, w);
+	public void setDiffuseColor(float r, float g, float b) {
+		diffuseColor.set(r, g, b, 1.0);
 	}
 
 	public List<Mesh> getMaterialMeshList() {
