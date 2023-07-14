@@ -1,6 +1,6 @@
 package com.captainsly.radiant.core.scene;
 
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import java.util.Collection;
@@ -17,6 +17,7 @@ import com.captainsly.radiant.core.Radiant;
 import com.captainsly.radiant.core.entity.Actor;
 import com.captainsly.radiant.core.entity.Entity;
 import com.captainsly.radiant.core.impl.Disposable;
+import com.captainsly.radiant.core.render.gl.Fog;
 import com.captainsly.radiant.core.render.gl.Projection;
 import com.captainsly.radiant.core.render.gl.SkyBox;
 import com.captainsly.radiant.core.render.gl.Texture;
@@ -29,6 +30,7 @@ public abstract class Scene implements Disposable {
 
 	private SceneLights sceneLights;
 	private SkyBox sceneSkyBox;
+	private Fog fog;
 	private Map<String, Model> modelMap;
 	private Projection projection;
 	private Game game;
@@ -40,9 +42,14 @@ public abstract class Scene implements Disposable {
 		this.game = game;
 		modelMap = new HashMap<>();
 		projection = new Projection(width, height);
+
 		sceneLights = new SceneLights();
+
 		sceneSkyBox = new SkyBox("src/main/resources/models/skybox/skybox.obj");
 		sceneSkyBox.getSkyBoxEntity().setScale(50);
+
+		fog = new Fog(true, new Vector3f(0.5f, 0.5f, 0.5f), 0.5f);
+
 	}
 
 	public abstract void onInit();
@@ -140,11 +147,17 @@ public abstract class Scene implements Disposable {
 		updatePointLight(pointLight, prefix + ".pl", viewMatrix);
 	}
 
-	protected void createUniforms() {
+	public void createUniforms() {
+		// Lighting Uniforms
 		game.getShader().addUniform("material.ambient");
 		game.getShader().addUniform("material.diffuse");
 		game.getShader().addUniform("material.specular");
 		game.getShader().addUniform("material.reflectance");
+		game.getShader().addUniform("material.hasNormalMap");
+
+		game.getShader().addUniform("txtSampler");
+		game.getShader().addUniform("normalSampler");
+
 		game.getShader().addUniform("ambientLight.factor");
 		game.getShader().addUniform("ambientLight.color");
 
@@ -173,26 +186,43 @@ public abstract class Scene implements Disposable {
 		game.getShader().addUniform("dirLight.color");
 		game.getShader().addUniform("dirLight.direction");
 		game.getShader().addUniform("dirLight.intensity");
+
+		game.getShader().addUniform("fog.color");
+		game.getShader().addUniform("fog.density");
+		game.getShader().addUniform("fog.turnonfog");
 	}
 
 	public void render() {
-		onRender();
-
 		updateLights();
+
+		onRender();
+		game.getShader().setUniform("txtSampler", 0);
+		game.getShader().setUniform("normalSampler", 1);
 		Collection<Model> models = getModelMap().values();
 		for (Model model : models) {
 			List<Entity> entities = model.getEntitiesList();
 
 			for (Material material : model.getMaterialList()) {
+
 				game.getShader().setUniform("material.ambient", material.getAmbientColor());
 				game.getShader().setUniform("material.diffuse", material.getDiffuseColor());
 				game.getShader().setUniform("material.specular", material.getSpecularColor());
 				game.getShader().setUniform("material.reflectance", material.getReflectance());
 
+				String normalMapPath = material.getNormalMapPath();
+				boolean hasNormalMapPath = normalMapPath != null;
+				game.getShader().setUniform("material.hasNormalMap", hasNormalMapPath ? 1 : 0);
+
 				Texture texture = Radiant.resources.getTexture(material.getTexturePath());
 				glActiveTexture(GL_TEXTURE0);
 				texture.bind();
 
+				if (hasNormalMapPath) {
+					Texture normalMapTexture = Radiant.resources.getTexture(material.getNormalMapPath());
+					glActiveTexture(GL_TEXTURE1);
+					normalMapTexture.bind();
+				}
+				
 				for (Mesh mesh : material.getMaterialMeshList()) {
 					for (Entity entity : entities) {
 						game.getShader().setUniform("modelMatrix",
@@ -243,6 +273,10 @@ public abstract class Scene implements Disposable {
 
 	public SceneLights getSceneLights() {
 		return sceneLights;
+	}
+
+	public Fog getFog() {
+		return fog;
 	}
 
 	public Game getGame() {

@@ -36,7 +36,9 @@ public class Window implements Disposable {
 		glfwDefaultWindowHints();
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+		
 		windowPointer = glfwCreateWindow(windowWidth, windowHeight, windowTitle, MemoryUtil.NULL, MemoryUtil.NULL);
 		if (windowPointer == MemoryUtil.NULL)
 			throw new RuntimeException("Failed to create GLFW Window");
@@ -61,30 +63,30 @@ public class Window implements Disposable {
 		imGuiGLFW.init(windowPointer, true);
 		imGuiGL.init("#version 330");
 	}
-	
+
 	public void newFrame() {
 		imGuiGLFW.newFrame();
 		ImGui.newFrame();
 	}
-	
+
 	public void endFrame() {
 		ImGui.render();
 		imGuiGL.renderDrawData(ImGui.getDrawData());
-		
+
 		if (ImGui.getIO().hasConfigFlags(ImGuiConfigFlags.ViewportsEnable)) {
 			final long backupWindowPtr = GLFW.glfwGetCurrentContext();
 			ImGui.updatePlatformWindows();
 			ImGui.renderPlatformWindowsDefault();
 			GLFW.glfwMakeContextCurrent(backupWindowPtr);
 		}
-		
+
 	}
 
 	private void resize(long windowPointer, int width, int height) {
 		windowWidth = width;
 		windowHeight = height;
 		glViewport(0, 0, windowWidth, windowHeight);
-		
+
 	}
 
 	public void setWindowTitle(String windowTitle) {

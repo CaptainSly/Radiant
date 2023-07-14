@@ -14,6 +14,7 @@ public class Material implements Disposable {
 
 	private List<Mesh> meshList;
 	private String texturePath;
+	private String normalMapPath;
 
 	private float reflectance;
 	private Vector4f diffuseColor;
@@ -26,6 +27,10 @@ public class Material implements Disposable {
 		ambientColor = DEFAULT_COLOR;
 		specularColor = DEFAULT_COLOR;
 
+	}
+	
+	public void setNormalMapPath(String normalMapPath) {
+		this.normalMapPath = normalMapPath;
 	}
 
 	public void setTexturePath(String texturePath) {
@@ -40,6 +45,10 @@ public class Material implements Disposable {
 		return meshList;
 	}
 
+	public String getNormalMapPath() {
+		return normalMapPath;
+	}
+	
 	public float getReflectance() {
 		return reflectance;
 	}

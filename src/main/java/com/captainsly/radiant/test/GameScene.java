@@ -8,60 +8,52 @@ import org.joml.Vector3f;
 import com.captainsly.radiant.core.Game;
 import com.captainsly.radiant.core.Radiant;
 import com.captainsly.radiant.core.entity.Actor;
-import com.captainsly.radiant.core.entity.Entity;
-import com.captainsly.radiant.core.render.gl.Camera;
+import com.captainsly.radiant.core.render.gl.lights.AmbientLight;
+import com.captainsly.radiant.core.render.gl.lights.DirectionalLight;
 import com.captainsly.radiant.core.render.gl.lights.PointLight;
-import com.captainsly.radiant.core.render.gl.lights.SpotLight;
 import com.captainsly.radiant.core.render.gl.model.Model;
 import com.captainsly.radiant.core.scene.Scene;
 import com.captainsly.radiant.core.scene.SceneLights;
 
 public class GameScene extends Scene {
-
-	private static final int NUM_CHUNKS = 4;
-
-	private Entity[][] terrainEntities;
-	private LightControl lc;
+	private static final float MOUSE_SENSITIVITY = 0.1f;
+	private static final float MOVEMENT_SPEED = 1f;
 
 	public GameScene(int width, int height, Game game) {
 		super(width, height, game);
+
 	}
 
 	@Override
 	public void onInit() {
-		createUniforms();
+		getGame().getCamera().setPosition(0, .1f, 0);
 
-		getGame().getCamera().setPosition(0, .3f, 0);
+		Actor terrainActor = new Actor("terrain_actor",
+				Radiant.resources.getModel("terrain_model", "src/main/resources/models/quad/quad.obj"));
+		terrainActor.setPosition(0, 0, 0);
+		terrainActor.setScale(100f);
+		addActor(terrainActor);
 
-		String quadModelId = "quad-model";
-		Model quadModel = Radiant.resources.getModel(quadModelId, "src/main/resources/models/quad/quad.obj");
-
-		int numRows = NUM_CHUNKS * 2 + 1;
-		int numCols = numRows;
-		terrainEntities = new Entity[numRows][numCols];
-		for (int j = 0; j < numRows; j++) {
-			for (int i = 0; i < numCols; i++) {
-				Actor entity = new Actor("TERRAIN_" + j + "_" + i, quadModel);
-				terrainEntities[j][i] = entity;
-				addActor((Actor) terrainEntities[j][i]);
-			}
-		}
+		Actor frogActor = new Actor("frog_actor",
+				Radiant.resources.getModel("frog_model", "src/main/resources/models/frog/frog.fbx"));
+		frogActor.setScale(0.00008f);
+		frogActor.setPosition(0, 0.12f, -0.1895f);
+		addActor(frogActor);
 
 		SceneLights sceneLights = new SceneLights();
-		sceneLights.getAmbientLight().setIntensity(0.3f);
+		AmbientLight ambientLight = sceneLights.getAmbientLight();
+		ambientLight.setIntensity(0.5f);
+		ambientLight.setColor(0.3f, 0.3f, 0.3f);
+
+		PointLight pointLight = new PointLight(new Vector3f(1, 1, 1), 5f, new Vector3f(0, 0.15f, -0.1895f));
+		sceneLights.getPointLights().add(pointLight);
+
+		DirectionalLight dirLight = sceneLights.getDirLight();
+		dirLight.setPosition(0, 1, 0);
+		dirLight.setIntensity(1.0f);
 		setSceneLights(sceneLights);
-		sceneLights.getPointLights().add(new PointLight(new Vector3f(1, 1, 1), 1.0f, new Vector3f(0, 0, -1.4f)));
-
-		Vector3f coneDir = new Vector3f(0, 0, -1);
-		sceneLights.getSpotLights().add(
-				new SpotLight(new PointLight(new Vector3f(1, 1, 1), 0.0f, new Vector3f(0, 0, -1.4f)), coneDir, 140.0f));
-
-		lc = new LightControl(this);
 
 	}
-
-	private static final float MOUSE_SENSITIVITY = 0.1f;
-	private static final float MOVEMENT_SPEED = 5f;
 
 	@Override
 	public void onInput(double delta) {
@@ -99,8 +91,6 @@ public class GameScene extends Scene {
 					(float) Math.toRadians(-displayVec.y * MOUSE_SENSITIVITY));
 		}
 
-		lc.handleGuiInput(this);
-
 	}
 
 	@Override
@@ -108,42 +98,16 @@ public class GameScene extends Scene {
 	}
 
 	public void onRenderGui() {
-		lc.drawGui();
 	}
 
 	float temp = 0.0f;
 
 	@Override
 	public void onUpdate(double delta) {
-//		temp += delta;
+		temp += delta * 0.5f;
 //		float tempSin = (float) Math.sin(temp);
 //		float tempCos = (float) Math.cos(temp);
-		updateTerrain();
-	}
 
-	public void updateTerrain() {
-		int cellSize = 10;
-		Camera camera = getGame().getCamera();
-		Vector3f cameraPos = camera.getPosition();
-		int cellCol = (int) (cameraPos.x / cellSize);
-		int cellRow = (int) (cameraPos.y / cellSize);
-
-		int numRows = NUM_CHUNKS * 2 + 1;
-		int numCols = numRows;
-		int zOffset = -NUM_CHUNKS;
-		float scale = cellSize / 2.0f;
-
-		for (int j = 0; j < numRows; j++) {
-			int xOffset = -NUM_CHUNKS;
-			for (int i = 0; i < numCols; i++) {
-				Entity entity = terrainEntities[j][i];
-				entity.setScale(scale);
-				entity.setPosition((cellCol + xOffset) * 2.0f, 0, (cellRow + zOffset) * 2.0f);
-				xOffset++;
-			}
-
-			zOffset++;
-		}
 	}
 
 	@Override

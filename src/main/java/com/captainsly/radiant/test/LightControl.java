@@ -60,6 +60,7 @@ public class LightControl {
 		pointLightIntensity = new float[] { pointLight.getIntensity() };
 
 		SpotLight spotLight = sceneLights.getSpotLights().get(0);
+		if (spotLight != null) {
 		pointLight = spotLight.getPointLight();
 		color = pointLight.getColor();
 		pos = pointLight.getPosition();
@@ -73,7 +74,7 @@ public class LightControl {
 		dirConeX = new float[] { coneDir.x };
 		dirConeY = new float[] { coneDir.y };
 		dirConeZ = new float[] { coneDir.z };
-
+		}
 		DirectionalLight dirLight = sceneLights.getDirLight();
 		color = dirLight.getColor();
 		pos = dirLight.getDirection();

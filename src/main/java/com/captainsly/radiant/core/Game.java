@@ -1,11 +1,16 @@
 package com.captainsly.radiant.core;
 
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL14.GL_FUNC_ADD;
+import static org.lwjgl.opengl.GL14.glBlendEquation;
+
 import java.util.Collection;
 import java.util.List;
 
 import com.captainsly.radiant.core.entity.Entity;
 import com.captainsly.radiant.core.impl.GameLogic;
 import com.captainsly.radiant.core.render.gl.Camera;
+import com.captainsly.radiant.core.render.gl.Fog;
 import com.captainsly.radiant.core.render.gl.SkyBoxRenderer;
 import com.captainsly.radiant.core.render.gl.model.Model;
 import com.captainsly.radiant.core.render.gl.shaders.ShaderProgram;
@@ -20,32 +25,47 @@ public class Game implements GameLogic {
 
 	@Override
 	public void onInit() {
-		currentScene = new GameScene(Radiant.window.getWindowWidth(), Radiant.window.getWindowHeight(), this);
 
 		camera = new Camera();
-
+		
+		currentScene = new GameScene(Radiant.window.getWindowWidth(), Radiant.window.getWindowHeight(), this);
+		currentScene.onInit();
+		
 		shader = Radiant.resources.getShader("default");
 		shader.addUniform("projectionMatrix");
 		shader.addUniform("viewMatrix");
 		shader.addUniform("modelMatrix");
-		shader.addUniform("txtSampler");
+		
 
-		currentScene.onInit();
+		currentScene.createUniforms();
+		
+		
 		skyBoxRender = new SkyBoxRenderer();
 	}
 
 	@Override
 	public void onRender() {
-		skyBoxRender.render(currentScene);
+//		skyBoxRender.render(currentScene);
 
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		shader.bind();
+
+		// Bind the Base Projection and View Matrixes as well as the TextureSampler
 		shader.setUniform("projectionMatrix", currentScene.getProjection().getProjectionMatrix());
 		shader.setUniform("viewMatrix", camera.getViewMatrix());
-		shader.setUniform("txtSampler", 0);
+
+		// Get the Scene Fog, and Bind the Fog Uniforms
+		Fog fog = currentScene.getFog();
+		shader.setUniform("fog.turnonfog", fog.isActive() ? 1 : 0);
+		shader.setUniform("fog.color", fog.getColor());
+		shader.setUniform("fog.density", fog.getDensity());
 
 		currentScene.render();
 
 		shader.unbind();
+		glDisable(GL_BLEND);
 
 	}
 

@@ -40,6 +40,7 @@ public class SkyBoxRenderer implements Disposable {
 
 		skyBoxShader.bind();
 		skyBoxShader.setUniform("projectionMatrix", scene.getProjection().getProjectionMatrix());
+		skyBoxViewMatrix.set(scene.getGame().getCamera().getViewMatrix());
 		skyBoxViewMatrix.m30(0).m31(0).m32(0);
 		skyBoxShader.setUniform("viewMatrix", skyBoxViewMatrix);
 		skyBoxShader.setUniform("txtSampler", 0);

@@ -27,6 +27,7 @@ public class ShaderProgram implements Disposable {
 
 		vertexShader = createShader(vSource, GL_VERTEX_SHADER);
 		fragmentShader = createShader(fSource, GL_FRAGMENT_SHADER);
+			
 		link();
 	}
 
@@ -34,8 +35,8 @@ public class ShaderProgram implements Disposable {
 		int uniformLocation = glGetUniformLocation(programId, uniformName);
 
 		if (uniformLocation < 0)
-			throw new RuntimeException("Error: Could not find Uniform: " + uniformName);
-
+			throw new RuntimeException("Error: Could not find Uniform: " + uniformName + ". Trying to use value: " + uniformLocation);
+		
 		uniformMap.put(uniformName, uniformLocation);
 	}
 

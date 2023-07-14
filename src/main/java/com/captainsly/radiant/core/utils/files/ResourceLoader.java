@@ -75,7 +75,7 @@ public class ResourceLoader implements Disposable {
 
 	public Model getModel(String modelId, String modelPath) {
 		return loadModel(modelId, modelPath,
-				aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
+				aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
 						| aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights
 						| aiProcess_PreTransformVertices);
 
@@ -158,15 +158,28 @@ public class ResourceLoader implements Disposable {
 				createTexture(material.getTexturePath());
 				material.setDiffuseColor(Material.DEFAULT_COLOR);
 			}
-			
+
+			AIString aiNormalMapPath = AIString.calloc(stack);
+			aiGetMaterialTexture(aiMaterial, aiTextureType_NORMALS, 0, aiNormalMapPath, (IntBuffer) null, null, null,
+					null, null, null);
+			String normalMapPath = aiNormalMapPath.dataString();
+			if (normalMapPath != null && normalMapPath.length() > 0) {
+				material.setNormalMapPath(modelDir + File.separator + new File(normalMapPath).getName());
+				createTexture(material.getNormalMapPath());
+			}
+
 			return material;
 		}
 	}
 
 	private Mesh processMesh(AIMesh aiMesh) {
 		Vertex[] vertices = processVertices(aiMesh);
+
 		float[] textCoords = processTextCoords(aiMesh);
 		float[] normals = processNormals(aiMesh);
+		float[] tangents = processTangents(aiMesh, normals);
+		float[] bitangents = processBitangents(aiMesh, normals);
+
 		int[] indices = processIndices(aiMesh);
 
 		// Texture coordinates may not have been populated. We need at least the empty
@@ -176,7 +189,45 @@ public class ResourceLoader implements Disposable {
 			textCoords = new float[numElements];
 		}
 
-		return new Mesh(vertices, normals, textCoords, indices);
+		return new Mesh(vertices, normals, tangents, bitangents, textCoords, indices);
+	}
+
+	private float[] processTangents(AIMesh aiMesh, float[] normals) {
+		AIVector3D.Buffer buffer = aiMesh.mTangents();
+		float[] data = new float[buffer.remaining() * 3];
+		int pos = 0;
+		while (buffer.remaining() > 0) {
+			AIVector3D aiTangent = buffer.get();
+			data[pos++] = aiTangent.x();
+			data[pos++] = aiTangent.y();
+			data[pos++] = aiTangent.z();
+		}
+
+		// Assimp may not calculate tangents with models that do not have texture
+		// coordinates. Just create empty values
+		if (data.length == 0) {
+			data = new float[normals.length];
+		}
+		return data;
+	}
+
+	private float[] processBitangents(AIMesh aiMesh, float[] normals) {
+		AIVector3D.Buffer buffer = aiMesh.mBitangents();
+		float[] data = new float[buffer.remaining() * 3];
+		int pos = 0;
+		while (buffer.remaining() > 0) {
+			AIVector3D aiBitangent = buffer.get();
+			data[pos++] = aiBitangent.x();
+			data[pos++] = aiBitangent.y();
+			data[pos++] = aiBitangent.z();
+		}
+
+		// Assimp may not calculate tangents with models that do not have texture
+		// coordinates. Just create empty values
+		if (data.length == 0) {
+			data = new float[normals.length];
+		}
+		return data;
 	}
 
 	private int[] processIndices(AIMesh aiMesh) {
@@ -195,7 +246,7 @@ public class ResourceLoader implements Disposable {
 
 	private float[] processNormals(AIMesh aiMesh) {
 		AIVector3D.Buffer buffer = aiMesh.mNormals();
-		
+
 		float[] data = new float[buffer.remaining() * 3];
 		int pos = 0;
 		while (buffer.remaining() > 0) {
