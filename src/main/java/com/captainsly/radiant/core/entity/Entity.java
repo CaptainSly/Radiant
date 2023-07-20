@@ -3,12 +3,14 @@ package com.captainsly.radiant.core.entity;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import com.captainsly.radiant.core.render.gl.AnimationData;
 import com.captainsly.radiant.core.render.gl.Transform;
 
 public abstract class Entity {
 
 	private final String entityId;
 	private final String modelId;
+	private AnimationData animationData;
 	private Transform modelTransform;
 
 	public Entity(String entityId, String modelId) {
@@ -34,6 +36,10 @@ public abstract class Entity {
 
 	public void setPosition(Vector3f position) {
 		this.modelTransform.setPosition(position);
+	}
+
+	public void setAnimationData(AnimationData animationData) {
+		this.animationData = animationData;
 	}
 
 	public void setScale(float scale) {
@@ -66,6 +72,10 @@ public abstract class Entity {
 
 	public Quaternionf getRotation() {
 		return modelTransform.getRotation();
+	}
+
+	public AnimationData getAnimationData() {
+		return animationData;
 	}
 
 	public Vector3f getPosition() {

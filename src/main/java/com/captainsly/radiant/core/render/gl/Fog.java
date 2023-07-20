@@ -14,13 +14,9 @@ public class Fog {
 	}
 
 	public Fog(boolean active, Vector3f color, float density) {
-		this.active = active;
 		this.color = color;
 		this.density = density;
-	}
-
-	public boolean isActive() {
-		return active;
+		this.active = active;
 	}
 
 	public Vector3f getColor() {
@@ -29,6 +25,10 @@ public class Fog {
 
 	public float getDensity() {
 		return density;
+	}
+
+	public boolean isActive() {
+		return active;
 	}
 
 	public void setActive(boolean active) {
@@ -42,5 +42,4 @@ public class Fog {
 	public void setDensity(float density) {
 		this.density = density;
 	}
-
 }

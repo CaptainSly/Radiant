@@ -1,6 +1,9 @@
 package com.captainsly.radiant.core;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL11.glEnable;
 
 import java.util.Random;
 
@@ -53,6 +56,9 @@ public class Engine implements Disposable {
 		glfwShowWindow(Radiant.window.getWindowPointer());
 
 		GL.createCapabilities();
+		glEnable(GL_MULTISAMPLE);
+		glEnable(GL_DEPTH_TEST);
+
 		Radiant.window.init();
 
 		Radiant.resources = new ResourceLoader();
@@ -111,19 +117,17 @@ public class Engine implements Disposable {
 			if (render) {
 
 				RenderUtils.clearBuffer();
-				
-				
-				
+
 				// Render Game
 				gameLogic.onRender();
-				
+
 				// Render Ui
 				Radiant.window.newFrame();
 				gameLogic.onRenderUi();
 				Radiant.window.endFrame();
-				
+
 				RenderUtils.renderBuffer();
-				
+
 				frames++;
 			} else {
 				try {

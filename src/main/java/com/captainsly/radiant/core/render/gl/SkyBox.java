@@ -12,7 +12,7 @@ public class SkyBox implements Disposable {
 	private Model skyBoxModel;
 
 	public SkyBox(String skyBoxModelPath) {
-		skyBoxModel = Radiant.resources.getModel("skybox-model", skyBoxModelPath);
+		skyBoxModel = Radiant.resources.getModel("skybox-model", skyBoxModelPath, false);
 		skyBoxEntity = new Actor("skybox-entity", skyBoxModel);
 	}
 

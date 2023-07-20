@@ -27,19 +27,17 @@ public class Game implements GameLogic {
 	public void onInit() {
 
 		camera = new Camera();
-		
+
 		currentScene = new GameScene(Radiant.window.getWindowWidth(), Radiant.window.getWindowHeight(), this);
 		currentScene.onInit();
-		
+
 		shader = Radiant.resources.getShader("default");
 		shader.addUniform("projectionMatrix");
 		shader.addUniform("viewMatrix");
 		shader.addUniform("modelMatrix");
-		
 
 		currentScene.createUniforms();
-		
-		
+
 		skyBoxRender = new SkyBoxRenderer();
 	}
 
@@ -56,13 +54,14 @@ public class Game implements GameLogic {
 		shader.setUniform("projectionMatrix", currentScene.getProjection().getProjectionMatrix());
 		shader.setUniform("viewMatrix", camera.getViewMatrix());
 
-		// Get the Scene Fog, and Bind the Fog Uniforms
-		Fog fog = currentScene.getFog();
-		shader.setUniform("fog.turnonfog", fog.isActive() ? 1 : 0);
+		currentScene.render();
+
+		// Fog
+		Fog fog = currentScene.getSceneFog();
+		shader.setUniform("fog.activeFog", fog.isActive() ? 1 : 0);
 		shader.setUniform("fog.color", fog.getColor());
 		shader.setUniform("fog.density", fog.getDensity());
-
-		currentScene.render();
+		
 
 		shader.unbind();
 		glDisable(GL_BLEND);

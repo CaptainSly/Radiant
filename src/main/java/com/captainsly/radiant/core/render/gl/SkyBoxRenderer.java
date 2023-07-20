@@ -22,8 +22,7 @@ public class SkyBoxRenderer implements Disposable {
 	private Matrix4f skyBoxViewMatrix;
 
 	public SkyBoxRenderer() {
-		skyBoxShader = new ShaderProgram(Radiant.files.getFileContents("src/main/resources/shaders/skybox.vs"),
-				Radiant.files.getFileContents("src/main/resources/shaders/skybox.fs"));
+		skyBoxShader = Radiant.resources.getShader("skybox");
 		skyBoxViewMatrix = new Matrix4f();
 		skyBoxShader.addUniform("projectionMatrix");
 		skyBoxShader.addUniform("viewMatrix");
@@ -34,39 +33,40 @@ public class SkyBoxRenderer implements Disposable {
 	}
 
 	public void render(Scene scene) {
-		SkyBox skyBox = scene.getSceneSkybox();
-		if (skyBox == null)
-			return;
+        SkyBox skyBox = scene.getSceneSkybox();
+        if (skyBox == null) {
+            return;
+        }
+        skyBoxShader.bind();
 
-		skyBoxShader.bind();
-		skyBoxShader.setUniform("projectionMatrix", scene.getProjection().getProjectionMatrix());
-		skyBoxViewMatrix.set(scene.getGame().getCamera().getViewMatrix());
-		skyBoxViewMatrix.m30(0).m31(0).m32(0);
-		skyBoxShader.setUniform("viewMatrix", skyBoxViewMatrix);
-		skyBoxShader.setUniform("txtSampler", 0);
+        skyBoxShader.setUniform("projectionMatrix", scene.getProjection().getProjectionMatrix());
+        skyBoxViewMatrix.set(scene.getGame().getCamera().getViewMatrix());
+        skyBoxViewMatrix.m30(0);
+        skyBoxViewMatrix.m31(0);
+        skyBoxViewMatrix.m32(0);
+        skyBoxShader.setUniform("viewMatrix", skyBoxViewMatrix);
+        skyBoxShader.setUniform("txtSampler", 0);
 
-		Model skyBoxModel = skyBox.getSkyBoxModel();
-		Entity skyBoxEntity = skyBox.getSkyBoxEntity();
+        Model skyBoxModel = skyBox.getSkyBoxModel();
+        Entity skyBoxEntity = skyBox.getSkyBoxEntity();
+        for (Material material : skyBoxModel.getMaterialList()) {
+            Texture texture = Radiant.resources.getTexture(material.getTexturePath());
+            glActiveTexture(GL_TEXTURE0);
+            texture.bind();
 
-		for (Material material : skyBoxModel.getMaterialList()) {
-			Texture texture = Radiant.resources.getTexture(material.getTexturePath());
-			glActiveTexture(GL_TEXTURE0);
-			texture.bind();
+            skyBoxShader.setUniform("diffuse", material.getDiffuseColor());
+            skyBoxShader.setUniform("hasTexture", texture.getTexturePath().equals(ResourceLoader.DEFAULT_TEXTURE) ? 0 : 1);
 
-			skyBoxShader.setUniform("diffuse", material.getDiffuseColor());
-			skyBoxShader.setUniform("hasTexture",
-					texture.getTexturePath().equals(ResourceLoader.DEFAULT_TEXTURE) ? 0 : 1);
+            for (Mesh mesh : material.getMeshList()) {
+                glBindVertexArray(mesh.getVaoId());
 
-			for (Mesh mesh : material.getMeshList()) {
-				skyBoxShader.setUniform("modelMatrix", skyBoxEntity.getModelTransform().getTransformationMatrix());
-				mesh.draw();				
-			}
+                skyBoxShader.setUniform("modelMatrix", skyBoxEntity.getModelTransform().getTransformationMatrix());
+                mesh.draw();
+            }
+        }
 
-		}
-
-		glBindVertexArray(0);		
-		skyBoxShader.unbind();
-	}
+        skyBoxShader.unbind();
+    }
 
 	@Override
 	public void onDispose() {

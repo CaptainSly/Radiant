@@ -15,11 +15,13 @@ public class RenderUtils {
 	public static void clearBuffer() {
 		GL32.glClearColor(CLEAR_COLOR.x, CLEAR_COLOR.y, CLEAR_COLOR.z, CLEAR_COLOR.w);
 		GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+
 	}
 
 	public static void clearBuffer(float x, float y, float z) {
 		GL32.glClearColor(x, y, z, 1.0f);
 		GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+
 	}
 
 	public static void renderBuffer() {

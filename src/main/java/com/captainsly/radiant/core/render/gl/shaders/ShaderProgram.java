@@ -2,6 +2,7 @@ package com.captainsly.radiant.core.render.gl.shaders;
 
 import static org.lwjgl.opengl.GL20.*;
 
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,9 +10,10 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import com.captainsly.radiant.core.impl.Disposable;
-import com.captainsly.radiant.core.utils.Buffers;
 
 public class ShaderProgram implements Disposable {
 
@@ -27,7 +29,7 @@ public class ShaderProgram implements Disposable {
 
 		vertexShader = createShader(vSource, GL_VERTEX_SHADER);
 		fragmentShader = createShader(fSource, GL_FRAGMENT_SHADER);
-			
+
 		link();
 	}
 
@@ -35,8 +37,9 @@ public class ShaderProgram implements Disposable {
 		int uniformLocation = glGetUniformLocation(programId, uniformName);
 
 		if (uniformLocation < 0)
-			throw new RuntimeException("Error: Could not find Uniform: " + uniformName + ". Trying to use value: " + uniformLocation);
-		
+			throw new RuntimeException(
+					"Error: Could not find Uniform: " + uniformName + ". Trying to use value: " + uniformLocation);
+
 		uniformMap.put(uniformName, uniformLocation);
 	}
 
@@ -61,7 +64,20 @@ public class ShaderProgram implements Disposable {
 	}
 
 	public void setUniform(String uniformName, Matrix4f value) {
-		glUniformMatrix4fv(uniformMap.get(uniformName), false, Buffers.createFlippedMatrixBuffer(value));
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			glUniformMatrix4fv(uniformMap.get(uniformName), false, value.get(stack.mallocFloat(16)));
+		}
+	}
+
+	public void setUniform(String uniformName, Matrix4f[] matrices) {
+		try (MemoryStack stack = MemoryStack.stackPush()) {
+			int length = matrices != null ? matrices.length : 0;
+			FloatBuffer fb = MemoryUtil.memCallocFloat(16 * length);
+			for (int i = 0; i < length; i++) {
+				matrices[i].get(16 * i, fb);
+			}
+			glUniformMatrix4fv(uniformMap.get(uniformName), false, fb);
+		}
 	}
 
 	private int createShader(String shaderSource, int shaderType) {

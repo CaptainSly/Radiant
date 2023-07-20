@@ -1,23 +1,20 @@
 package com.captainsly.radiant.core.entity;
 
-import java.util.List;
-
+import com.captainsly.radiant.core.Radiant;
 import com.captainsly.radiant.core.impl.Disposable;
-import com.captainsly.radiant.core.render.gl.model.Material;
 import com.captainsly.radiant.core.render.gl.model.Model;
 
 public class Actor extends Entity implements Disposable {
 
 	private Model actorModel;
 
-	public Actor(String entityId, List<Material> actorMaterials) {
-		super(entityId, entityId + "_model");
-		actorModel = new Model(this.getModelId(), actorMaterials);
-	}
-
 	public Actor(String entityId, Model actorModel) {
 		super(entityId, actorModel.getModelId());
 		this.actorModel = actorModel;
+	}
+
+	public Actor(String entityId, String modelId, String modelPath, boolean animated) {
+		this(entityId, Radiant.resources.getModel(modelId, modelPath, animated));
 	}
 
 	public Model getActorModel() {

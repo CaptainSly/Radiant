@@ -12,46 +12,46 @@ in vec2 outTextCoord;
 
 out vec4 fragColor;
 
-struct Attenuation {
+struct Attenuation
+{
     float constant;
     float linear;
     float exponent;
 };
-
-struct Material {
+struct Material
+{
     vec4 ambient;
     vec4 diffuse;
     vec4 specular;
     float reflectance;
     int hasNormalMap;
 };
-
-struct AmbientLight {
+struct AmbientLight
+{
     float factor;
     vec3 color;
 };
-
 struct PointLight {
     vec3 position;
     vec3 color;
     float intensity;
     Attenuation att;
 };
-
-struct SpotLight {
+struct SpotLight
+{
     PointLight pl;
     vec3 conedir;
     float cutoff;
 };
-
-struct DirLight {
+struct DirLight
+{
     vec3 color;
     vec3 direction;
     float intensity;
 };
-
-struct Fog {
-    int turnonfog;
+struct Fog
+{
+    int activeFog;
     vec3 color;
     float density;
 };
@@ -64,8 +64,6 @@ uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 uniform DirLight dirLight;
 uniform Fog fog;
-
-// Lighting
 
 vec4 calcAmbient(AmbientLight ambientLight, vec4 ambient) {
     return vec4(ambientLight.factor * ambientLight.color, 1) * ambient;
@@ -122,8 +120,6 @@ vec4 calcDirLight(vec4 diffuse, vec4 specular, DirLight light, vec3 position, ve
     return calcLightColor(diffuse, specular, light.color, light.intensity, position, normalize(light.direction), normal);
 }
 
-// Fog
-
 vec4 calcFog(vec3 pos, vec4 color, Fog fog, vec3 ambientLight, DirLight dirLight) {
     vec3 fogColor = fog.color * (ambientLight + dirLight.color * dirLight.intensity);
     float distance = length(pos);
@@ -133,8 +129,6 @@ vec4 calcFog(vec3 pos, vec4 color, Fog fog, vec3 ambientLight, DirLight dirLight
     vec3 resultColor = mix(fogColor, color.xyz, fogFactor);
     return vec4(resultColor.xyz, color.w);
 }
-
-// Normals
 
 vec3 calcNormal(vec3 normal, vec3 tangent, vec3 bitangent, vec2 textCoords) {
     mat3 TBN = mat3(tangent, bitangent, normal);
@@ -168,10 +162,9 @@ void main() {
             diffuseSpecularComp += calcSpotLight(diffuse, specular, spotLights[i], outPosition, normal);
         }
     }
-    
     fragColor = ambient + diffuseSpecularComp;
 
-    if (fog.turnonfog == 1) {
+    if (fog.activeFog == 1) {
         fragColor = calcFog(outPosition, fragColor, fog, ambientLight.color, dirLight);
-    } 
+    }
 }

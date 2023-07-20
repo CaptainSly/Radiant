@@ -1,6 +1,6 @@
 package com.captainsly.radiant.core.render.gl.mesh;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
@@ -15,21 +15,28 @@ import java.util.List;
 
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import com.captainsly.radiant.core.impl.Disposable;
-import com.captainsly.radiant.core.utils.Buffers;
 
 public class Mesh implements Disposable {
 
+	public static final int MAX_WEIGHTS = 4;
+
 	private int numVertices;
 	private int vaoId;
-
 	private List<Integer> vboIdList;
 
-	public Mesh(Vertex[] vertices, float[] normals, float[] tangents, float[] bitangents, float[] textCoords,
+	public Mesh(float[] positions, float[] normals, float[] tangents, float[] bitangents, float[] textCoords,
 			int[] indices) {
+		this(positions, normals, tangents, bitangents, textCoords, indices,
+				new int[Mesh.MAX_WEIGHTS * positions.length / 3], new float[Mesh.MAX_WEIGHTS * positions.length / 3]);
+	}
+
+	public Mesh(float[] positions, float[] normals, float[] tangents, float[] bitangents, float[] textCoords,
+			int[] indices, int[] boneIndices, float[] weights) {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
-			this.numVertices = indices.length;
+			numVertices = indices.length;
 			vboIdList = new ArrayList<>();
 
 			vaoId = glGenVertexArrays();
@@ -38,7 +45,8 @@ public class Mesh implements Disposable {
 			// Positions VBO
 			int vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			FloatBuffer positionsBuffer = Buffers.createFlippedVertexBuffer(vertices);
+			FloatBuffer positionsBuffer = MemoryUtil.memCallocFloat(positions.length);
+			positionsBuffer.put(0, positions);
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, positionsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(0);
@@ -47,7 +55,7 @@ public class Mesh implements Disposable {
 			// Normals VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			FloatBuffer normalsBuffer = Buffers.createFloatBuffer(normals.length);
+			FloatBuffer normalsBuffer = MemoryUtil.memCallocFloat(normals.length);
 			normalsBuffer.put(0, normals);
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
@@ -57,37 +65,57 @@ public class Mesh implements Disposable {
 			// Tangents VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			FloatBuffer tangentsBuffer = Buffers.createFloatBuffer(tangents.length);
+			FloatBuffer tangentsBuffer = MemoryUtil.memCallocFloat(tangents.length);
 			tangentsBuffer.put(0, tangents);
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, tangentsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(2);
 			glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
-			
+
 			// Bitangents VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			FloatBuffer bitangentsBuffer = Buffers.createFloatBuffer(bitangents.length);
-			tangentsBuffer.put(0, bitangents);
+			FloatBuffer bitangentsBuffer = MemoryUtil.memCallocFloat(bitangents.length);
+			bitangentsBuffer.put(0, bitangents);
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, bitangentsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(3);
 			glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
 
-			// Texture Coords VBO
+			// Texture coordinates VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			FloatBuffer textCoordsBuffer = Buffers.createFloatBuffer(textCoords.length);
+			FloatBuffer textCoordsBuffer = MemoryUtil.memAllocFloat(textCoords.length);
 			textCoordsBuffer.put(0, textCoords);
 			glBindBuffer(GL_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ARRAY_BUFFER, textCoordsBuffer, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(4);
 			glVertexAttribPointer(4, 2, GL_FLOAT, false, 0, 0);
 
+			// Bone weights
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			FloatBuffer weightsBuffer = MemoryUtil.memAllocFloat(weights.length);
+			weightsBuffer.put(weights).flip();
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(5);
+			glVertexAttribPointer(5, 4, GL_FLOAT, false, 0, 0);
+
+			// Bone indices
+			vboId = glGenBuffers();
+			vboIdList.add(vboId);
+			IntBuffer boneIndicesBuffer = MemoryUtil.memAllocInt(boneIndices.length);
+			boneIndicesBuffer.put(boneIndices).flip();
+			glBindBuffer(GL_ARRAY_BUFFER, vboId);
+			glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(6);
+			glVertexAttribPointer(6, 4, GL_FLOAT, false, 0, 0);
+
 			// Index VBO
 			vboId = glGenBuffers();
 			vboIdList.add(vboId);
-			IntBuffer indicesBuffer = Buffers.createIntBuffer(indices.length);
+			IntBuffer indicesBuffer = MemoryUtil.memCallocInt(indices.length);
 			indicesBuffer.put(0, indices);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
@@ -98,20 +126,9 @@ public class Mesh implements Disposable {
 	}
 
 	public void draw() {
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
 		glBindVertexArray(vaoId);
-		glDrawElements(GL_TRIANGLES, numVertices, GL_UNSIGNED_INT, 0);
-	}
-
-	public final int getVaoId() {
-		return vaoId;
-	}
-
-	public int getNumVertices() {
-		return numVertices;
+		glDrawElements(GL_TRIANGLES, getNumVertices(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 	}
 
 	@Override
@@ -120,4 +137,11 @@ public class Mesh implements Disposable {
 		glDeleteVertexArrays(vaoId);
 	}
 
+	public int getNumVertices() {
+		return numVertices;
+	}
+
+	public final int getVaoId() {
+		return vaoId;
+	}
 }

@@ -1,6 +1,7 @@
 package com.captainsly.radiant.core.scene;
 
-import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import java.util.Collection;
@@ -17,10 +18,7 @@ import com.captainsly.radiant.core.Radiant;
 import com.captainsly.radiant.core.entity.Actor;
 import com.captainsly.radiant.core.entity.Entity;
 import com.captainsly.radiant.core.impl.Disposable;
-import com.captainsly.radiant.core.render.gl.Fog;
-import com.captainsly.radiant.core.render.gl.Projection;
-import com.captainsly.radiant.core.render.gl.SkyBox;
-import com.captainsly.radiant.core.render.gl.Texture;
+import com.captainsly.radiant.core.render.gl.*;
 import com.captainsly.radiant.core.render.gl.lights.*;
 import com.captainsly.radiant.core.render.gl.mesh.Mesh;
 import com.captainsly.radiant.core.render.gl.model.Material;
@@ -30,7 +28,7 @@ public abstract class Scene implements Disposable {
 
 	private SceneLights sceneLights;
 	private SkyBox sceneSkyBox;
-	private Fog fog;
+	private Fog sceneFog;
 	private Map<String, Model> modelMap;
 	private Projection projection;
 	private Game game;
@@ -45,16 +43,11 @@ public abstract class Scene implements Disposable {
 
 		sceneLights = new SceneLights();
 
-		sceneSkyBox = new SkyBox("src/main/resources/models/skybox/skybox.obj");
+		sceneSkyBox = new SkyBox("resources/models/skybox/skybox.obj");
 		sceneSkyBox.getSkyBoxEntity().setScale(50);
-
-		fog = new Fog(true, new Vector3f(0.5f, 0.5f, 0.5f), 0.5f);
-
 	}
 
 	public abstract void onInit();
-
-	public abstract void onRender();
 
 	public abstract void onRenderGui();
 
@@ -189,13 +182,14 @@ public abstract class Scene implements Disposable {
 
 		game.getShader().addUniform("fog.color");
 		game.getShader().addUniform("fog.density");
-		game.getShader().addUniform("fog.turnonfog");
+		game.getShader().addUniform("fog.activeFog");
+
+		game.getShader().addUniform("bonesMatrices");
 	}
 
 	public void render() {
 		updateLights();
 
-		onRender();
 		game.getShader().setUniform("txtSampler", 0);
 		game.getShader().setUniform("normalSampler", 1);
 		Collection<Model> models = getModelMap().values();
@@ -222,11 +216,17 @@ public abstract class Scene implements Disposable {
 					glActiveTexture(GL_TEXTURE1);
 					normalMapTexture.bind();
 				}
-				
+
 				for (Mesh mesh : material.getMaterialMeshList()) {
 					for (Entity entity : entities) {
 						game.getShader().setUniform("modelMatrix",
 								entity.getModelTransform().getTransformationMatrix());
+						AnimationData animationData = entity.getAnimationData();
+						if (animationData == null)
+							game.getShader().setUniform("bonesMatrices", AnimationData.DEFAULT_BONES_MATRICES);
+						else
+							game.getShader().setUniform("bonesMatrices",
+									animationData.getCurrentFrame().boneMatrices());
 						mesh.draw();
 					}
 				}
@@ -259,6 +259,10 @@ public abstract class Scene implements Disposable {
 		this.sceneLights = sceneLights;
 	}
 
+	public void setSceneFog(Fog sceneFog) {
+		this.sceneFog = sceneFog;
+	}
+
 	public Map<String, Model> getModelMap() {
 		return modelMap;
 	}
@@ -275,8 +279,8 @@ public abstract class Scene implements Disposable {
 		return sceneLights;
 	}
 
-	public Fog getFog() {
-		return fog;
+	public Fog getSceneFog() {
+		return sceneFog;
 	}
 
 	public Game getGame() {
