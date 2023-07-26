@@ -27,7 +27,6 @@ import com.captainsly.radiant.core.render.gl.model.Model;
 public abstract class Scene implements Disposable {
 
 	private SceneLights sceneLights;
-	private SkyBox sceneSkyBox;
 	private Fog sceneFog;
 	private Map<String, Model> modelMap;
 	private Projection projection;
@@ -42,9 +41,7 @@ public abstract class Scene implements Disposable {
 		projection = new Projection(width, height);
 
 		sceneLights = new SceneLights();
-
-		sceneSkyBox = new SkyBox("resources/models/skybox/skybox.obj");
-		sceneSkyBox.getSkyBoxEntity().setScale(50);
+		sceneFog = new Fog(true, new Vector3f(0.5f, 0.5f, 0.5f), 0.95f);
 	}
 
 	public abstract void onInit();
@@ -270,9 +267,9 @@ public abstract class Scene implements Disposable {
 	public Projection getProjection() {
 		return projection;
 	}
-
-	public SkyBox getSceneSkybox() {
-		return sceneSkyBox;
+	
+	public Camera getCamera() {
+		return game.getCamera();
 	}
 
 	public SceneLights getSceneLights() {
@@ -289,7 +286,6 @@ public abstract class Scene implements Disposable {
 
 	@Override
 	public void onDispose() {
-		sceneSkyBox.onDispose();
 		modelMap.values().stream().forEach(Model::onDispose);
 		dispose();
 	}

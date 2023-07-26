@@ -11,7 +11,6 @@ import com.captainsly.radiant.core.entity.Entity;
 import com.captainsly.radiant.core.impl.GameLogic;
 import com.captainsly.radiant.core.render.gl.Camera;
 import com.captainsly.radiant.core.render.gl.Fog;
-import com.captainsly.radiant.core.render.gl.SkyBoxRenderer;
 import com.captainsly.radiant.core.render.gl.model.Model;
 import com.captainsly.radiant.core.render.gl.shaders.ShaderProgram;
 import com.captainsly.radiant.core.scene.Scene;
@@ -19,7 +18,6 @@ import com.captainsly.radiant.test.GameScene;
 
 public class Game implements GameLogic {
 	private ShaderProgram shader;
-	private SkyBoxRenderer skyBoxRender;
 	private Camera camera;
 	private Scene currentScene;
 
@@ -38,12 +36,10 @@ public class Game implements GameLogic {
 
 		currentScene.createUniforms();
 
-		skyBoxRender = new SkyBoxRenderer();
 	}
 
 	@Override
 	public void onRender() {
-//		skyBoxRender.render(currentScene);
 
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_ADD);
@@ -54,15 +50,14 @@ public class Game implements GameLogic {
 		shader.setUniform("projectionMatrix", currentScene.getProjection().getProjectionMatrix());
 		shader.setUniform("viewMatrix", camera.getViewMatrix());
 
-		currentScene.render();
-
 		// Fog
 		Fog fog = currentScene.getSceneFog();
 		shader.setUniform("fog.activeFog", fog.isActive() ? 1 : 0);
 		shader.setUniform("fog.color", fog.getColor());
 		shader.setUniform("fog.density", fog.getDensity());
-		
 
+		currentScene.render();
+		
 		shader.unbind();
 		glDisable(GL_BLEND);
 

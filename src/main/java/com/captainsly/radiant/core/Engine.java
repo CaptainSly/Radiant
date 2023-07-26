@@ -18,7 +18,7 @@ import com.captainsly.radiant.core.utils.files.ResourceLoader;
 public class Engine implements Disposable {
 
 	private boolean isRunning = true;
-	private double FRAME_COUNT = 5000.0;
+	private double FRAME_COUNT = 60.0d;
 
 	private GameLogic gameLogic;
 
